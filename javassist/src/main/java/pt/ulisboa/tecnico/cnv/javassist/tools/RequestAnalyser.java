@@ -52,16 +52,9 @@ public class RequestAnalyser extends CodeDumper {
         return requesMap;
     }
 
-    public static void seeBeahavior(String behavior) {
-        System.out.println(behavior);
-    }
-
     @Override
     protected void transform(CtBehavior behavior) throws Exception {
         super.transform(behavior);
-        // if(behavior.getName().equals("handleRequest")){
-        //     behavior.insertAfter(String.format("%s.seeBeahavior(\"%s\");", RequestAnalyser.class.getName(), behavior.getName()));
-        // }
         if(behavior.getName().equals("handle")){
             behavior.insertAfter(String.format("%s.getRequestMetrics($1);", RequestAnalyser.class.getName()));
         }
