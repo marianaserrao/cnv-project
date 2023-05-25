@@ -1,65 +1,119 @@
 package pt.ulisboa.tecnico.cnv.javassist.tools;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.awt.image.BufferedImage;
 
+import javassist.CannotCompileException;
 import javassist.CtBehavior;
 
 import com.sun.net.httpserver.HttpExchange;
 
 public class RequestAnalyser extends CodeDumper {
-
     public RequestAnalyser(List<String> packageNameList, String writeDestination) {
         super(packageNameList, writeDestination);
     }
+    public static ThreadLocal<Map<String, String>> metricsThread = new ThreadLocal<>();
+    public static List<Map<String, String>> metricsList = new ArrayList<>();
+
+    public static void initializeThread(HttpExchange he) {
+        Map<String, String> initialThread = new HashMap<String, String>(){{
+            put("blocks","0");
+            put("methods","0");
+            put("instances","0");           
+        }};
+        metricsThread.set(initialThread);
+    }
+    
+    public static void appendMetrics(HttpExchange he) {
+        Map<String, String> metrics = metricsThread.get();
+        if (metrics.containsKey("app")) {
+            metricsList.add(metrics);
+            System.out.println(metricsList);            
+        }
+    }
+
+    public static void incMapValue(Map<String, String> metrics, String fieldName, int increment) {
+        String fieldValue  = metrics.get(fieldName);
+        int value = Integer.parseInt(fieldValue);
+        value+=increment;
+        metrics.put(fieldName, Integer.toString(value));
+    }
+
+    public static void incBehavior() {
+        Map<String, String> metrics = metricsThread.get();
+        if (metrics != null){
+            incMapValue(metrics, "methods", 1);
+        }
+    }
+    
+    public static void incBasicBlock(int position, int length) {
+        Map<String, String> metrics = metricsThread.get();
+        if (metrics != null){
+            incMapValue(metrics, "blocks", 1);
+            incMapValue(metrics, "instances", length);
+        }
+    }
 
     public static Map<String, String> getRequestMap(String uri) {
-        Map<String, String> requesMap = new HashMap<>();
-        requesMap.put("app", uri.split("[/?]")[1]);
-        for(String param : uri.split("&")) {
+        Map<String, String> requestMap = new HashMap<>();
+
+        String[] uriSegments = uri.split("[/?]");
+        requestMap.put("app", uriSegments[1]);
+        for(String param : uriSegments[2].split("&")) {
             String[] entry = param.split("=");
             if(entry.length > 1) {
-                requesMap.put(entry[0], entry[1]);
+                requestMap.put(entry[0], entry[1]);
             }else{
-                requesMap.put(entry[0], "");
+                requestMap.put(entry[0], "");
             }
         }
-        return requesMap;
+        return requestMap;
     }
-
+    
     // for GET requests
-    public static Map<String,String> getRequestMetrics(HttpExchange he){
+    public static void getRequestParams(HttpExchange he){
         if(he.getRequestMethod().equals("GET")){
             String uri = he.getRequestURI().toString();
-            Map<String,String> requesMap = getRequestMap(uri);    
-            System.out.println(requesMap);
-            return  requesMap;
+            Map<String,String> requestMap = getRequestMap(uri);  
+            Map<String, String> metrics = metricsThread.get();
+            metrics.putAll(requestMap);  
         }
-        return null;
     }
     // For POST requests (image compression)
-    public static Map<String,String> getRequestMetrics(BufferedImage bi, String targetFormat, float compressionQuality){
-        Map<String, String> requesMap = new HashMap<String, String>(){{
-            put("app", "compressimage");
-            put("imageWidth",Integer.toString(bi.getWidth()));
-            put("imageHeight",Integer.toString(bi.getHeight()));
-            put("targetFormat", targetFormat);
-            put("compressionQuality", Float.toString(compressionQuality));
-        }};
-        System.out.println(requesMap);
-        return requesMap;
+    public static void getRequestParams(BufferedImage bi, String targetFormat, float compressionQuality){
+        Map<String, String> metrics = metricsThread.get();
+        metrics.put("app", "compressimage");
+        metrics.put("imageWidth",Integer.toString(bi.getWidth()));
+        metrics.put("imageHeight",Integer.toString(bi.getHeight()));
+        metrics.put("targetFormat", targetFormat);
+        metrics.put("compressionQuality", Float.toString(compressionQuality));
+    }
+    public static void seeBehavior(String behavior) {
+        System.out.println(behavior);
     }
 
     @Override
     protected void transform(CtBehavior behavior) throws Exception {
         super.transform(behavior);
+        
         if(behavior.getName().equals("handle")){
-            behavior.insertAfter(String.format("%s.getRequestMetrics($1);", RequestAnalyser.class.getName()));
+            behavior.insertBefore(String.format("%s.initializeThread($1);", RequestAnalyser.class.getName()));
+            behavior.insertAfter(String.format("%s.getRequestParams($1);", RequestAnalyser.class.getName()));
+            behavior.insertAfter(String.format("%s.appendMetrics($1);", RequestAnalyser.class.getName()));
+        }else{
+            behavior.insertAfter(String.format("%s.incBehavior();", RequestAnalyser.class.getName()));
         }
         if(behavior.getName().equals("process")){
-            behavior.insertAfter(String.format("%s.getRequestMetrics($1, $2, $3);", RequestAnalyser.class.getName()));
+            behavior.insertAfter(String.format("%s.getRequestParams($1, $2, $3);", RequestAnalyser.class.getName()));
         }
+    }
+
+    @Override
+    protected void transform(BasicBlock block) throws CannotCompileException {
+        super.transform(block);
+        block.behavior.insertAt(block.line, String.format("%s.incBasicBlock(%s, %s);", RequestAnalyser.class.getName(), block.getPosition(), block.getLength()));
     }
 }

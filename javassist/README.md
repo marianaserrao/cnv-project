@@ -147,3 +147,7 @@ For each of the sample instrumention tools and Java application examples, in the
 Creating a new Javassist tool is as simple as creating a new subclass of `AbstractJavassistTool`. In the new tool, you can then override `transform` methods to decide how to instrument methods, constructors, and basic blocks. To instrument code, reffer to the already provided example tools, and to Javassist [API documentation](https://www.javassist.org/html/index.html) and [tutorial](https://www.javassist.org/tutorial/tutorial.html).
 
 Create a tool similarl to the Basic Block Cache build with Pin but this time with Javassist. It will be able to simulate the effect of a basic block cache for your Java applications.
+
+`java -cp webserver/target/webserver-1.0.0-SNAPSHOT-jar-with-dependencies.jar -javaagent:javassist/target/JavassistWrapper-1.0-jar-with-dependencies.jar=RequestAnalyser:pt.ulisboa.tecnico.cnv:output pt.ulisboa.tecnico.cnv.webserver.WebServer`
+
+https://grupos.ist.utl.pt/meic-cnv/project/index-22-23.html

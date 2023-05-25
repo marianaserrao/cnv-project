@@ -3,6 +3,7 @@
 /home/mserrao/dd/cnv/eco-work/javassist/src/main/java/pt/ulisboa/tecnico/cnv/javassist/tools/AbstractJavassistTool.java
 /home/mserrao/dd/cnv/eco-work/javassist/src/main/java/pt/ulisboa/tecnico/cnv/javassist/tools/CodeDumper.java
 /home/mserrao/dd/cnv/eco-work/javassist/src/main/java/pt/ulisboa/tecnico/cnv/javassist/tools/ClassAnalyser.java
+/home/mserrao/dd/cnv/eco-work/javassist/src/main/java/pt/ulisboa/tecnico/cnv/javassist/tools/ThreadMetrics.java
 /home/mserrao/dd/cnv/eco-work/javassist/src/main/java/pt/ulisboa/tecnico/cnv/javassist/tools/MethodAnalyser.java
 /home/mserrao/dd/cnv/eco-work/javassist/src/main/java/pt/ulisboa/tecnico/cnv/javassist/JavassistAgent.java
 /home/mserrao/dd/cnv/eco-work/javassist/src/main/java/pt/ulisboa/tecnico/cnv/javassist/tools/BranchStatistics.java
