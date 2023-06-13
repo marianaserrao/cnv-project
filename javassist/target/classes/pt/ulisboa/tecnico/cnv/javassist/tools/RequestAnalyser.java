@@ -1,5 +1,7 @@
 package pt.ulisboa.tecnico.cnv.javassist.tools;
 
+import pt.ulisboa.tecnico.cnv.javassist.DynamoDB;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +24,7 @@ public class RequestAnalyser extends CodeDumper {
         Map<String, String> initialThread = new HashMap<String, String>(){{
             put("blocks","0");
             put("methods","0");
-            put("instances","0");           
+            put("instructions","0");           
         }};
         metricsThread.set(initialThread);
     }
@@ -37,9 +39,9 @@ public class RequestAnalyser extends CodeDumper {
 
     public static void incMapValue(Map<String, String> metrics, String fieldName, int increment) {
         String fieldValue  = metrics.get(fieldName);
-        int value = Integer.parseInt(fieldValue);
+        long value = Long.parseLong(fieldValue);
         value+=increment;
-        metrics.put(fieldName, Integer.toString(value));
+        metrics.put(fieldName, Long.toString(value));
     }
 
     public static void incBehavior() {
@@ -53,7 +55,7 @@ public class RequestAnalyser extends CodeDumper {
         Map<String, String> metrics = metricsThread.get();
         if (metrics != null){
             incMapValue(metrics, "blocks", 1);
-            incMapValue(metrics, "instances", length);
+            incMapValue(metrics, "instructions", length);
         }
     }
 
