@@ -1,7 +1,5 @@
 package pt.ulisboa.tecnico.cnv.javassist.tools;
 
-import pt.ulisboa.tecnico.cnv.javassist.DynamoDB;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,15 +8,18 @@ import java.awt.image.BufferedImage;
 
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
+import pt.ulisboa.tecnico.cnv.javassist.dynamodb.DynamoDB;
 
 import com.sun.net.httpserver.HttpExchange;
 
 public class RequestAnalyser extends CodeDumper {
-    public RequestAnalyser(List<String> packageNameList, String writeDestination) {
-        super(packageNameList, writeDestination);
-    }
+    private static DynamoDB dynamodb;
     public static ThreadLocal<Map<String, String>> metricsThread = new ThreadLocal<>();
-    public static List<Map<String, String>> metricsList = new ArrayList<>();
+
+    public RequestAnalyser(List<String> packageNameList, String writeDestination) throws Exception{
+        super(packageNameList, writeDestination);
+        dynamodb = new DynamoDB();
+    }
 
     public static void initializeThread(HttpExchange he) {
         Map<String, String> initialThread = new HashMap<String, String>(){{
@@ -29,11 +30,10 @@ public class RequestAnalyser extends CodeDumper {
         metricsThread.set(initialThread);
     }
     
-    public static void appendMetrics(HttpExchange he) {
+    public static void appendMetrics(HttpExchange he) throws Exception{
         Map<String, String> metrics = metricsThread.get();
         if (metrics.containsKey("app")) {
-            metricsList.add(metrics);
-            System.out.println(metricsList);            
+            dynamodb.addMetrics(metrics);
         }
     }
 

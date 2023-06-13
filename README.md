@@ -20,6 +20,10 @@ The system runs within the Amazon Web Services ecosystem, organized in four main
 ## Running the project
 
 ```
+source <path-to-aws-credentials>/config.sh
+```
+
+```
 mvn clean package
 ```
 
